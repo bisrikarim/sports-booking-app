@@ -34,7 +34,7 @@
 
 ### 1️⃣ **Cloner le projet**
 ```bash
-git clone https://github.com/ton-repo/sports-booking-app.git
+git clone https://github.com/bisrikarim/sports-booking-app.git
 cd sports-booking-app
 ```
 
@@ -147,7 +147,7 @@ curl -X DELETE http://localhost:3001/api/bookings/ID_RESERVATION \
 4. **Faites** un `pull request`.
 5. **Participez** en ouvrant des issues pour suggérer des améliorations !
 
-📌 **Repo GitHub** : [Lien du projet](https://github.com/ton-repo/sports-booking-app)
+📌 **Repo GitHub** : [Lien du projet](https://github.com/bisrikarim/sports-booking-app.git)
 
 ---
 
