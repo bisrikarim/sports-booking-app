@@ -10,5 +10,7 @@ router.get('/:id', authMiddleware, bookingController.getBookingById);
 router.put('/:id', authMiddleware, bookingController.updateBooking);
 router.put('/:id/confirm', authMiddleware, bookingController.confirmBooking);
 router.delete('/:id', authMiddleware, bookingController.deleteBooking);
+router.put('/:id/cancel', authMiddleware, bookingController.cancelBooking);
+
 
 module.exports = router;

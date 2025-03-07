@@ -10,29 +10,27 @@ const generateToken = (user) => {
 
 exports.register = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role } = req.body;
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
             return res.status(400).json({ error: "Cet email est déjà utilisé" });
         }
 
-        // 🛠 Vérification avant stockage
+        // 🔹 Assigner le rôle seulement si c'est "admin", sinon "user" par défaut
+        const assignedRole = role === "admin" ? "admin" : "user";
+        
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log("Mot de passe haché avant stockage :", hashedPassword);
+        const user = new User({ name, email, password: hashedPassword, role: assignedRole });
 
-        const user = new User({ name, email, password: hashedPassword });
         await user.save();
-
-        // 🛠 Vérification après stockage
-        const savedUser = await User.findOne({ email });
-        console.log("Mot de passe en base après insertion :", savedUser.password);
-
         res.status(201).json({ message: "Utilisateur créé avec succès" });
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 
 

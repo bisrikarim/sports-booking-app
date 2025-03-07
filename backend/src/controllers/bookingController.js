@@ -7,10 +7,23 @@ const MAX_RESERVATION_DAYS = 30; // Max 30 jours à l'avance
 
 exports.createBooking = async (req, res) => {
     try {
-        const { user, field, date, timeSlot } = req.body;
+        const { field, date, timeSlot } = req.body;
+        const user = req.user.id; 
 
         const today = new Date();
         const reservationDate = new Date(date);
+
+        // Vérifier si l'utilisateur existe
+        const userExists = await User.findById(user);
+        if (!userExists) {
+            return res.status(404).json({ error: "Utilisateur non trouvé." });
+        }
+
+        // Vérifier si le terrain existe
+        const fieldExists = await Field.findById(field);
+        if (!fieldExists) {
+            return res.status(404).json({ error: "Terrain non trouvé." });
+        }
 
         // ✅ Vérifier si la date est valide
         if (reservationDate < today) {
@@ -34,7 +47,7 @@ exports.createBooking = async (req, res) => {
         }
 
         // ✅ Créer la réservation
-        const booking = new Booking(req.body);
+        const booking = new Booking({ user, field, date, timeSlot, status: "pending" });
         await booking.save();
         res.status(201).json(booking);
 
@@ -42,6 +55,7 @@ exports.createBooking = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
 
 exports.updateBooking = async (req, res) => {
     try {
@@ -69,17 +83,28 @@ exports.updateBooking = async (req, res) => {
 
 exports.confirmBooking = async (req, res) => {
     try {
-        const booking = await Booking.findByIdAndUpdate(
-            req.params.id,
-            { status: "confirmed" },
-            { new: true }
-        );
-        if (!booking) return res.status(404).json({ error: 'Booking not found' });
-        res.json(booking);
+        // Vérifier si l'utilisateur est un admin
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Accès refusé. Seuls les administrateurs peuvent confirmer une réservation." });
+        }
+
+        const { id } = req.params;
+        const booking = await Booking.findById(id);
+        
+        if (!booking) {
+            return res.status(404).json({ error: "Réservation non trouvée." });
+        }
+
+        // Mettre à jour le statut de la réservation
+        booking.status = 'confirmed';
+        await booking.save();
+
+        res.json({ message: "Réservation confirmée avec succès.", booking });
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
+
 
 exports.getAllBookings = async (req, res) => {
     try {
@@ -114,3 +139,40 @@ exports.deleteBooking = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.cancelBooking = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const booking = await Booking.findById(id);
+
+        if (!booking) {
+            return res.status(404).json({ error: "Réservation non trouvée." });
+        }
+
+        // Vérifier si la réservation est confirmée
+        if (booking.status === "confirmed") {
+            return res.status(400).json({ error: "Impossible d'annuler une réservation déjà confirmée." });
+        }
+
+        // Vérifier si l'annulation est autorisée
+        if (req.user.role !== 'admin' && booking.user.toString() !== req.user.id) {
+            return res.status(403).json({ error: "Accès refusé. Vous ne pouvez annuler que vos propres réservations." });
+        }
+
+        // Vérifier si la réservation peut encore être annulée (ex: pas moins de 24h avant)
+        const currentTime = new Date();
+        const bookingTime = new Date(booking.date);
+        if ((bookingTime - currentTime) < (24 * 60 * 60 * 1000)) {
+            return res.status(400).json({ error: "Impossible d'annuler la réservation moins de 24h à l'avance." });
+        }
+
+        // Mettre à jour le statut en "canceled"
+        booking.status = 'canceled';
+        await booking.save();
+
+        res.json({ message: "Réservation annulée avec succès.", booking });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
