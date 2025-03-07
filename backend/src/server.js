@@ -8,7 +8,9 @@ app.use(express.json());
 // Importation des routes
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/fields', require('./routes/fieldRoutes'));
-app.use('/api/users', require('./routes/userRoutes')); 
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+
 
 
 // Connexion MongoDB

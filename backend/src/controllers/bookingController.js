@@ -83,12 +83,17 @@ exports.confirmBooking = async (req, res) => {
 
 exports.getAllBookings = async (req, res) => {
     try {
-        const bookings = await Booking.find().populate('user').populate('field');
+        let query = {};
+        if (req.user.role !== 'admin') {
+            query.user = req.user.id;
+        }
+        const bookings = await Booking.find(query).populate('user').populate('field');
         res.json(bookings);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 exports.getBookingById = async (req, res) => {
     try {
