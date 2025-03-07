@@ -51,9 +51,9 @@ MONGO_URI=mongodb://localhost:27017/sports-booking
 JWT_SECRET=your_secret_key
 ```
 
-### 4️⃣ **Démarrer l'application**
+### 4️⃣ **Démarrer l'application avec Docker Compose**
 ```bash
-npm start
+docker-compose up --build
 ```
 L'API sera accessible sur `http://localhost:3001`
 
