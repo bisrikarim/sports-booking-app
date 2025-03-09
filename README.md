@@ -34,8 +34,8 @@
 
 ### 1️⃣ **Cloner le projet**
 ```bash
-git clone https://github.com/bisrikarim/sports-booking-app.git
-cd sports-booking-app
+git clone https://github.com/bisrikarim/MatchBook.git
+cd MatchBook
 ```
 
 ### 2️⃣ **Installer les dépendances**
@@ -147,7 +147,7 @@ curl -X DELETE http://localhost:3001/api/bookings/ID_RESERVATION \
 4. **Faites** un `pull request`.
 5. **Participez** en ouvrant des issues pour suggérer des améliorations !
 
-📌 **Repo GitHub** : [Lien du projet](https://github.com/bisrikarim/sports-booking-app.git)
+📌 **Repo GitHub** : [Lien du projet](https://github.com/bisrikarim/MatchBook.git)
 
 ---
 
