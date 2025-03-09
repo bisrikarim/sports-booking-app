@@ -1,6 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const app = express();
+
+// Configuration CORS pour autoriser le frontend
+app.use(cors({
+    origin: "http://localhost:3000", // Autoriser uniquement le frontend
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization"
+}));
 
 // Middleware pour JSON
 app.use(express.json());
@@ -11,11 +19,9 @@ app.use('/api/fields', require('./routes/fieldRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 
-
-
 // Connexion MongoDB
 const mongoURI = process.env.MONGO_URI || "mongodb://mongo:27017/reservation_db";
-mongoose.connect(mongoURI)
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log("✅ Connected to MongoDB"))
     .catch(err => console.error("❌ MongoDB connection error:", err));
 

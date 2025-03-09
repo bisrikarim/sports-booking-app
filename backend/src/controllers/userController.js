@@ -1,13 +1,31 @@
 // controllers/userController.js
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 
 exports.createUser = async (req, res) => {
     try {
-        const user = new User(req.body);
-        await user.save();
-        res.status(201).json(user);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
+        const { name, email, password, role } = req.body;
+        
+        // Vérifier si l'utilisateur existe déjà
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: "Cet email est déjà utilisé" });
+        }
+
+        // Hachage du mot de passe avant d'enregistrer
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        const newUser = new User({
+            name,
+            email,
+            password: hashedPassword,
+            role: role || "user" // Assigner user par défaut
+        });
+
+        await newUser.save();
+        res.status(201).json({ message: "Utilisateur créé avec succès" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
 

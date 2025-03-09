@@ -1,21 +1,24 @@
-# Utiliser une image Node.js pour la construction
-FROM node:18 AS build
+# Étape 1 : Construction de l'application Next.js
+FROM node:18 AS builder
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install
 
-COPY . ./
+COPY . .
 RUN npm run build
 
-# Utiliser une image légère pour servir l'application
-FROM node:18-alpine AS production
+# Étape 2 : Exécution de l'application avec une image légère
+FROM node:18-alpine AS runner
 
 WORKDIR /app
 
-COPY --from=build /app/build ./build
+COPY --from=builder /app ./
 
-RUN npm install -g serve
+ENV NODE_ENV=production
 
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Exposer le port utilisé par Next.js
+EXPOSE 3000
+
+CMD ["npm", "run", "start"]

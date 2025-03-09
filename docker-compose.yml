@@ -29,7 +29,7 @@ services:
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: admin
       ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
-      ME_CONFIG_MONGODB_URL: mongodb://admin:admin123@mongo:27017/
+      ME_CONFIG_MONGODB_URL: mongodb://admin:admin123@mongo:27017/reservation_db
     depends_on:
       mongo:
         condition: service_healthy
@@ -72,8 +72,8 @@ services:
         condition: service_healthy
     networks:
       - app-network
-    command: >
-      sh -c "serve -s build -l 3000"
+    environment:
+      - NODE_ENV=production
 
 networks:
   app-network:
