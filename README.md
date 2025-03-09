@@ -1,7 +1,7 @@
-# 🏟️ Sports Booking App
+# 🏟️ MatchBook
 
 ## 📌 Description
-**Sports Booking App** est une application web permettant la gestion des réservations de terrains de sport. Les utilisateurs peuvent réserver des créneaux horaires pour des terrains spécifiques, tandis que les administrateurs peuvent gérer les terrains et les réservations.
+**MatchBook** est une application web permettant la gestion des réservations de terrains de sport. Les utilisateurs peuvent réserver des créneaux horaires pour des terrains spécifiques, tandis que les administrateurs peuvent gérer les terrains et les réservations.
 
 ---
 
