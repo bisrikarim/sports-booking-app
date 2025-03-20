@@ -1,12 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const { authMiddleware } = require('../middlewares/authMiddleware');
+const { validateUserCreation, validateUserUpdate, validateUserId } = require('../validations/userValidation');
+const { validate } = require('../middlewares/validationMiddleware');
 
-// Routes pour les utilisateurs (Users)
-router.post('/', userController.createUser); // Ajouter un utilisateur
-router.get('/', userController.getUsers); // Récupérer tous les utilisateurs
-router.get('/:id', userController.getUserById); // Récupérer un utilisateur par ID
-router.put('/:id', userController.updateUser); // Modifier un utilisateur
-router.delete('/:id', userController.deleteUser); // Supprimer un utilisateur
+// Middleware admin (si nécessaire)
+const adminMiddleware = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: "Accès refusé. Réservé aux administrateurs." });
+  }
+  next();
+};
+
+// Routes avec validation
+router.post('/', validateUserCreation, validate, userController.createUser);
+router.get('/', authMiddleware, adminMiddleware, userController.getUsers);
+router.get('/:id', authMiddleware, validateUserId, validate, userController.getUserById);
+router.put('/:id', authMiddleware, validateUserId, validateUserUpdate, validate, userController.updateUser);
+router.delete('/:id', authMiddleware, adminMiddleware, validateUserId, validate, userController.deleteUser);
 
 module.exports = router;

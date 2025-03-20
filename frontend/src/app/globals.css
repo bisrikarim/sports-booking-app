@@ -1,12 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #000000;     /* Nouvelle variable pour la couleur principale (noir) */
+  --primary-hover: #333333; /* Couleur de survol légèrement plus claire */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --primary: #000000;
+    --primary-hover: #333333;
   }
 }
 
@@ -39,4 +47,40 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+/* Remplacer la couleur bleue par du noir */
+.bg-blue-600,
+.bg-blue-500,
+.bg-blue-700 {
+  background-color: var(--primary) !important;
+}
+
+/* Pour les états de survol */
+.bg-blue-600:hover,
+.bg-blue-500:hover,
+.bg-blue-700:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+/* Cibler spécifiquement l'en-tête */
+header, 
+nav, 
+.header, 
+.navbar {
+  background-color: var(--primary) !important;
+}
+
+/* Boutons principaux */
+.btn-primary,
+button.primary,
+button[type="submit"] {
+  background-color: var(--primary) !important;
+}
+
+/* États de survol pour les boutons */
+.btn-primary:hover,
+button.primary:hover,
+button[type="submit"]:hover {
+  background-color: var(--primary-hover) !important;
 }

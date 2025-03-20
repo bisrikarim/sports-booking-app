@@ -13,12 +13,18 @@ exports.createField = async (req, res) => {
 
 exports.getAllFields = async (req, res) => {
     try {
-        const fields = await Field.find();
-        res.json(fields);
+      console.log("Récupération des terrains...");
+      // Ajoutez ce log pour voir quelle requête est exécutée
+      
+      const fields = await Field.find({ active: true });
+      console.log("Terrains trouvés:", fields);
+      
+      res.json(fields);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      console.error("Erreur:", error);
+      res.status(500).json({ error: error.message });
     }
-};
+  };
 
 exports.getFieldById = async (req, res) => {
     try {
@@ -42,10 +48,15 @@ exports.updateField = async (req, res) => {
 
 exports.deleteField = async (req, res) => {
     try {
-        const field = await Field.findByIdAndDelete(req.params.id);
-        if (!field) return res.status(404).json({ error: 'Field not found' });
-        res.json({ message: 'Field deleted' });
+      const field = await Field.findByIdAndUpdate(
+        req.params.id, 
+        { active: false },
+        { new: true }
+      );
+      
+      if (!field) return res.status(404).json({ error: 'Terrain non trouvé' });
+      res.json({ message: 'Terrain désactivé avec succès' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message });
     }
-};
+  };

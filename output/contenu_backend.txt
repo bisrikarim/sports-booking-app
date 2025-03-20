@@ -1,0 +1,1072 @@
+===== EXTRACTION DES FICHIERS BACKEND =====
+===== backend/src/config/database.js =====
+
+
+
+===== backend/src/validations/userValidation.js =====
+const { body, param } = require('express-validator');
+const User = require('../models/User');
+
+exports.validateUserCreation = [
+  body('name')
+    .notEmpty().withMessage('Le nom est requis')
+    .isLength({ min: 2, max: 50 }).withMessage('Le nom doit contenir entre 2 et 50 caractères'),
+  
+  body('email')
+    .notEmpty().withMessage('L\'email est requis')
+    .isEmail().withMessage('Format d\'email invalide')
+    .custom(async value => {
+      const existingUser = await User.findOne({ email: value });
+      if (existingUser) {
+        throw new Error('Cet email est déjà utilisé');
+      }
+      return true;
+    }),
+  
+  body('password')
+    .notEmpty().withMessage('Le mot de passe est requis')
+    .isLength({ min: 6 }).withMessage('Le mot de passe doit contenir au moins 6 caractères')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Le mot de passe doit contenir au moins une lettre majuscule, une lettre minuscule et un chiffre'),
+  
+  body('role')
+    .optional()
+    .isIn(['user', 'admin']).withMessage('Rôle non valide')
+];
+
+exports.validateUserUpdate = [
+  body('name')
+    .optional()
+    .isLength({ min: 2, max: 50 }).withMessage('Le nom doit contenir entre 2 et 50 caractères'),
+  
+  body('email')
+    .optional()
+    .isEmail().withMessage('Format d\'email invalide')
+    .custom(async (value, { req }) => {
+      const existingUser = await User.findOne({ email: value });
+      if (existingUser && existingUser._id.toString() !== req.params.id) {
+        throw new Error('Cet email est déjà utilisé');
+      }
+      return true;
+    }),
+  
+  body('password')
+    .optional()
+    .isLength({ min: 6 }).withMessage('Le mot de passe doit contenir au moins 6 caractères')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Le mot de passe doit contenir au moins une lettre majuscule, une lettre minuscule et un chiffre'),
+  
+  body('role')
+    .optional()
+    .isIn(['user', 'admin']).withMessage('Rôle non valide')
+];
+
+exports.validateUserId = [
+  param('id')
+    .isMongoId().withMessage('ID d\'utilisateur non valide')
+];
+
+
+===== backend/src/validations/fieldValidation.js =====
+const { body, param, query } = require('express-validator');
+
+// Validation pour la création et mise à jour de terrain
+exports.validateField = [
+  body('name')
+    .notEmpty().withMessage('Le nom du terrain est requis')
+    .isLength({ min: 3, max: 50 }).withMessage('Le nom doit contenir entre 3 et 50 caractères'),
+  
+  body('location')
+    .notEmpty().withMessage('L\'emplacement est requis')
+    .isLength({ min: 5, max: 100 }).withMessage('L\'emplacement doit contenir entre 5 et 100 caractères'),
+  
+  body('sportType')
+    .notEmpty().withMessage('Le type de sport est requis')
+    .isIn(['football', 'basketball', 'tennis', 'padel']).withMessage('Type de sport non valide'),
+  
+  body('pricePerHour')
+    .notEmpty().withMessage('Le prix par heure est requis')
+    .isNumeric().withMessage('Le prix doit être un nombre')
+    .custom(value => value > 0).withMessage('Le prix doit être supérieur à 0')
+];
+
+// Validation pour le paramètre ID
+exports.validateFieldId = [
+  param('id')
+    .isMongoId().withMessage('ID de terrain non valide')
+];
+
+
+===== backend/src/validations/bookingValidation.js =====
+const { body, param } = require('express-validator');
+const mongoose = require('mongoose');
+
+exports.validateBooking = [
+  body('field')
+    .notEmpty().withMessage('L\'ID du terrain est requis')
+    .isMongoId().withMessage('ID de terrain non valide'),
+  
+  body('date')
+    .notEmpty().withMessage('La date est requise')
+    .isISO8601().withMessage('Format de date invalide')
+    .custom(date => new Date(date) >= new Date()).withMessage('La date doit être future'),
+  
+  body('timeSlot')
+    .notEmpty().withMessage('Le créneau horaire est requis')
+    .matches(/^([01]\d|2[0-3]):00-([01]\d|2[0-3]):00$/).withMessage('Format de créneau horaire invalide (ex: 14:00-15:00)')
+    .custom((value) => {
+      // Extraction des heures de début et de fin
+      const [start, end] = value.split('-').map(time => parseInt(time.split(':')[0]));
+      return start < end; // Vérifier que l'heure de début est avant l'heure de fin
+    }).withMessage('L\'heure de début doit être avant l\'heure de fin'),
+];
+
+exports.validateBookingId = [
+  param('id')
+    .isMongoId().withMessage('ID de réservation non valide')
+];
+
+exports.validateBookingUpdate = [
+  body('status')
+    .optional()
+    .isIn(['pending', 'confirmed', 'cancelled']).withMessage('Statut non valide'),
+  
+  // Vous pouvez ajouter d'autres champs qui peuvent être mis à jour
+];
+
+
+===== backend/src/validations/authValidation.js =====
+const { body } = require('express-validator');
+
+exports.validateRegister = [
+  body('name')
+    .notEmpty().withMessage('Le nom est requis')
+    .isLength({ min: 2, max: 50 }).withMessage('Le nom doit contenir entre 2 et 50 caractères'),
+  
+  body('email')
+    .notEmpty().withMessage('L\'email est requis')
+    .isEmail().withMessage('Format d\'email invalide'),
+  
+  body('password')
+    .notEmpty().withMessage('Le mot de passe est requis')
+    .isLength({ min: 6 }).withMessage('Le mot de passe doit contenir au moins 6 caractères')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Le mot de passe doit contenir au moins une lettre majuscule, une lettre minuscule et un chiffre'),
+  
+  body('role')
+    .optional()
+    .isIn(['user', 'admin']).withMessage('Rôle non valide')
+];
+
+exports.validateLogin = [
+  body('email')
+    .notEmpty().withMessage('L\'email est requis')
+    .isEmail().withMessage('Format d\'email invalide'),
+  
+  body('password')
+    .notEmpty().withMessage('Le mot de passe est requis')
+];
+
+
+===== backend/src/routes/bookingRoutes.js =====
+const express = require('express');
+const router = express.Router();
+const bookingController = require('../controllers/bookingController');
+const { authMiddleware } = require('../middlewares/authMiddleware');
+const { validateBooking, validateBookingId, validateBookingUpdate } = require('../validations/bookingValidation');
+const { validate } = require('../middlewares/validationMiddleware');
+
+// Routes avec validation
+router.get('/', authMiddleware, bookingController.getAllBookings);
+router.post('/', authMiddleware, validateBooking, validate, bookingController.createBooking);
+router.get('/user', authMiddleware, bookingController.getUserBookings); // Cette route est nécessaire
+router.get('/:id', authMiddleware, validateBookingId, validate, bookingController.getBookingById);
+router.put('/:id', authMiddleware, validateBookingId, validateBookingUpdate, validate, bookingController.updateBooking);
+router.put('/:id/confirm', authMiddleware, validateBookingId, validate, bookingController.confirmBooking);
+router.delete('/:id', authMiddleware, validateBookingId, validate, bookingController.deleteBooking);
+router.put('/:id/cancel', authMiddleware, validateBookingId, validate, bookingController.cancelBooking);
+
+module.exports = router;
+
+
+===== backend/src/routes/paymentRoutes.js =====
+
+
+
+===== backend/src/routes/fieldRoutes.js =====
+const express = require('express');
+const router = express.Router();
+const fieldController = require('../controllers/fieldController');
+const { authMiddleware } = require('../middlewares/authMiddleware');
+const { validateField, validateFieldId } = require('../validations/fieldValidation');
+const { validate } = require('../middlewares/validationMiddleware');
+const upload = require('../middlewares/uploadMiddleware');
+
+// Middleware admin
+const adminMiddleware = (req, res, next) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Accès refusé. Réservé aux administrateurs." });
+    }
+    next();
+};
+
+// Routes avec validation
+router.post('/', authMiddleware, adminMiddleware, upload.single('image'), validateField, validate, fieldController.createField);
+router.get('/', fieldController.getAllFields);
+router.get('/:id', validateFieldId, validate, fieldController.getFieldById);
+router.put('/:id', authMiddleware, adminMiddleware, validateFieldId, validateField, validate, fieldController.updateField);
+router.delete('/:id', authMiddleware, adminMiddleware, validateFieldId, validate, fieldController.deleteField);
+
+module.exports = router;
+
+
+
+===== backend/src/routes/authRoutes.js =====
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/authController');
+const { validateRegister, validateLogin } = require('../validations/authValidation');
+const { validate } = require('../middlewares/validationMiddleware');
+
+router.post('/register', validateRegister, validate, authController.register);
+router.post('/login', validateLogin, validate, authController.login);
+
+module.exports = router;
+
+
+===== backend/src/routes/reviewRoutes.js =====
+
+
+
+===== backend/src/routes/userRoutes.js =====
+const express = require('express');
+const router = express.Router();
+const userController = require('../controllers/userController');
+const { authMiddleware } = require('../middlewares/authMiddleware');
+const { validateUserCreation, validateUserUpdate, validateUserId } = require('../validations/userValidation');
+const { validate } = require('../middlewares/validationMiddleware');
+
+// Middleware admin (si nécessaire)
+const adminMiddleware = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: "Accès refusé. Réservé aux administrateurs." });
+  }
+  next();
+};
+
+// Routes avec validation
+router.post('/', validateUserCreation, validate, userController.createUser);
+router.get('/', authMiddleware, adminMiddleware, userController.getUsers);
+router.get('/:id', authMiddleware, validateUserId, validate, userController.getUserById);
+router.put('/:id', authMiddleware, validateUserId, validateUserUpdate, validate, userController.updateUser);
+router.delete('/:id', authMiddleware, adminMiddleware, validateUserId, validate, userController.deleteUser);
+
+module.exports = router;
+
+
+===== backend/src/controllers/paymentController.js =====
+// controllers/paymentController.js
+const Payment = require('../models/Payment');
+
+exports.createPayment = async (req, res) => {
+    try {
+        const payment = new Payment(req.body);
+        await payment.save();
+        res.status(201).json(payment);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+exports.getPayments = async (req, res) => {
+    try {
+        const payments = await Payment.find();
+        res.json(payments);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getPaymentById = async (req, res) => {
+    try {
+        const payment = await Payment.findById(req.params.id);
+        if (!payment) return res.status(404).json({ message: 'Payment not found' });
+        res.json(payment);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.updatePayment = async (req, res) => {
+    try {
+        const payment = await Payment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!payment) return res.status(404).json({ message: 'Payment not found' });
+        res.json(payment);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.deletePayment = async (req, res) => {
+    try {
+        const payment = await Payment.findByIdAndDelete(req.params.id);
+        if (!payment) return res.status(404).json({ message: 'Payment not found' });
+        res.json({ message: 'Payment deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
+===== backend/src/controllers/fieldController.js =====
+// controllers/fieldController.js
+const Field = require('../models/Field');
+
+exports.createField = async (req, res) => {
+  try {
+      const { image, ...fieldData } = req.body;
+      const field = new Field({
+          ...fieldData,
+          image: image || '' // Permet de passer une image optionnelle
+      });
+      await field.save();
+      res.status(201).json(field);
+  } catch (error) {
+      res.status(400).json({ error: error.message });
+  }
+};
+
+exports.getAllFields = async (req, res) => {
+    try {
+      console.log("Récupération des terrains...");
+      // Ajoutez ce log pour voir quelle requête est exécutée
+      
+      const fields = await Field.find({ active: true });
+      console.log("Terrains trouvés:", fields);
+      
+      res.json(fields);
+    } catch (error) {
+      console.error("Erreur:", error);
+      res.status(500).json({ error: error.message });
+    }
+  };
+
+exports.getFieldById = async (req, res) => {
+    try {
+        const field = await Field.findById(req.params.id);
+        if (!field) return res.status(404).json({ error: 'Field not found' });
+        res.json(field);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.updateField = async (req, res) => {
+    try {
+        const field = await Field.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!field) return res.status(404).json({ error: 'Field not found' });  // ✅ Vérifie bien que c'est "Field"
+        res.json(field);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+exports.deleteField = async (req, res) => {
+    try {
+      const field = await Field.findByIdAndUpdate(
+        req.params.id, 
+        { active: false },
+        { new: true }
+      );
+      
+      if (!field) return res.status(404).json({ error: 'Terrain non trouvé' });
+      res.json({ message: 'Terrain désactivé avec succès' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+
+
+===== backend/src/controllers/bookingController.js =====
+const Booking = require('../models/Booking');
+const Field = require('../models/Field');
+const User = require('../models/User');
+
+const MAX_BOOKINGS_PER_USER = 2; // 2 réservations max par jour
+const MAX_RESERVATION_DAYS = 30; // Max 30 jours à l'avance
+
+exports.createBooking = async (req, res) => {
+    try {
+        const { field, date, timeSlot } = req.body;
+        const user = req.user.id; 
+
+        const today = new Date();
+        const reservationDate = new Date(date);
+
+        // Vérifier si l'utilisateur existe
+        const userExists = await User.findById(user);
+        if (!userExists) {
+            return res.status(404).json({ error: "Utilisateur non trouvé." });
+        }
+
+        // Vérifier si le terrain existe
+        const fieldExists = await Field.findById(field);
+        if (!fieldExists) {
+            return res.status(404).json({ error: "Terrain non trouvé." });
+        }
+
+        // ✅ Vérifier si la date est valide
+        if (reservationDate < today) {
+            return res.status(400).json({ error: "Impossible de réserver pour une date passée." });
+        }
+        if ((reservationDate - today) / (1000 * 60 * 60 * 24) > MAX_RESERVATION_DAYS) {
+            return res.status(400).json({ error: `Impossible de réserver à plus de ${MAX_RESERVATION_DAYS} jours à l'avance.` });
+        }
+
+        // ✅ Vérifier le nombre de réservations de l'utilisateur pour cette date
+        const userBookingsCount = await Booking.countDocuments({ user, date });
+
+        if (userBookingsCount >= MAX_BOOKINGS_PER_USER) {
+            return res.status(400).json({ error: `Vous avez atteint la limite de ${MAX_BOOKINGS_PER_USER} réservations pour cette journée.` });
+        }
+
+        // ✅ Vérifier si le terrain est déjà réservé pour ce créneau
+        const existingBooking = await Booking.findOne({ field, date, timeSlot });
+        if (existingBooking) {
+            return res.status(400).json({ error: "Ce terrain est déjà réservé pour ce créneau horaire." });
+        }
+
+        // ✅ Créer la réservation
+        const booking = new Booking({ user, field, date, timeSlot, status: "pending" });
+        await booking.save();
+        res.status(201).json(booking);
+
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+
+exports.updateBooking = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const booking = await Booking.findById(req.params.id);
+
+        if (!booking) return res.status(404).json({ error: 'Réservation non trouvée' });
+
+        const currentTime = new Date();
+        const bookingTime = new Date(booking.date);
+
+        // ✅ Empêcher l'annulation < 24h avant
+        if (status === "cancelled" && (bookingTime - currentTime) < (24 * 60 * 60 * 1000)) {
+            return res.status(400).json({ error: "Impossible d'annuler la réservation moins de 24h à l'avance." });
+        }
+
+        // ✅ Mettre à jour la réservation
+        const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updatedBooking);
+
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+exports.confirmBooking = async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est un admin
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Accès refusé. Seuls les administrateurs peuvent confirmer une réservation." });
+        }
+
+        const { id } = req.params;
+        const booking = await Booking.findById(id);
+        
+        if (!booking) {
+            return res.status(404).json({ error: "Réservation non trouvée." });
+        }
+
+        // Mettre à jour le statut de la réservation
+        booking.status = 'confirmed';
+        await booking.save();
+
+        res.json({ message: "Réservation confirmée avec succès.", booking });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+exports.getAllBookings = async (req, res) => {
+    try {
+      let query = {};
+      
+      // Filtres
+      if (req.query.status) query.status = req.query.status;
+      if (req.query.field) query.field = req.query.field;
+      
+      // Filtres de date
+      if (req.query.from || req.query.to) {
+        query.date = {};
+        if (req.query.from) query.date.$gte = new Date(req.query.from);
+        if (req.query.to) query.date.$lte = new Date(req.query.to);
+      }
+      
+      console.log("Query filtrée:", query);
+      
+      const bookings = await Booking.find(query)
+        .populate('user')
+        .populate('field')
+        .sort({ date: 1 });
+      
+      res.json(bookings);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+
+
+exports.getBookingById = async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id).populate('user').populate('field');
+        if (!booking) return res.status(404).json({ error: 'Booking not found' });
+        res.json(booking);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.deleteBooking = async (req, res) => {
+    try {
+        const booking = await Booking.findByIdAndDelete(req.params.id);
+        if (!booking) return res.status(404).json({ error: 'Réservation non trouvée' });
+        res.json({ message: 'Réservation supprimée avec succès' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.cancelBooking = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const booking = await Booking.findById(id);
+
+        if (!booking) {
+            return res.status(404).json({ error: "Réservation non trouvée." });
+        }
+
+        // Vérifier si la réservation est confirmée
+        if (booking.status === "confirmed") {
+            return res.status(400).json({ error: "Impossible d'annuler une réservation déjà confirmée." });
+        }
+
+        // Vérifier si l'annulation est autorisée
+        if (req.user.role !== 'admin' && booking.user.toString() !== req.user.id) {
+            return res.status(403).json({ error: "Accès refusé. Vous ne pouvez annuler que vos propres réservations." });
+        }
+
+        // Vérifier si la réservation peut encore être annulée (ex: pas moins de 24h avant)
+        const currentTime = new Date();
+        const bookingTime = new Date(booking.date);
+        if ((bookingTime - currentTime) < (24 * 60 * 60 * 1000)) {
+            return res.status(400).json({ error: "Impossible d'annuler la réservation moins de 24h à l'avance." });
+        }
+
+        // Mettre à jour le statut en "canceled"
+        booking.status = 'cancelled';
+        await booking.save();
+
+        res.json({ message: "Réservation annulée avec succès.", booking });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getUserBookings = async (req, res) => {
+    try {
+      const bookings = await Booking.find({ user: req.user.id })
+        .populate('field')
+        .sort({ date: -1 });
+      res.json(bookings);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+
+
+
+
+===== backend/src/controllers/userController.js =====
+// controllers/userController.js
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+
+exports.createUser = async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+        
+        // Vérifier si l'utilisateur existe déjà
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: "Cet email est déjà utilisé" });
+        }
+
+        // Hachage du mot de passe avant d'enregistrer
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        const newUser = new User({
+            name,
+            email,
+            password: hashedPassword,
+            role: role || "user" // Assigner user par défaut
+        });
+
+        await newUser.save();
+        res.status(201).json({ message: "Utilisateur créé avec succès" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getUsers = async (req, res) => {
+    try {
+        const users = await User.find();
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.updateUser = async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.deleteUser = async (req, res) => {
+    try {
+        const user = await User.findByIdAndDelete(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json({ message: 'User deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
+
+===== backend/src/controllers/reviewController.js =====
+// controllers/reviewController.js
+const Review = require('../models/Review');
+
+exports.createReview = async (req, res) => {
+    try {
+        const review = new Review(req.body);
+        await review.save();
+        res.status(201).json(review);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+exports.getReviews = async (req, res) => {
+    try {
+        const reviews = await Review.find();
+        res.json(reviews);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getReviewById = async (req, res) => {
+    try {
+        const review = await Review.findById(req.params.id);
+        if (!review) return res.status(404).json({ message: 'Review not found' });
+        res.json(review);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.updateReview = async (req, res) => {
+    try {
+        const review = await Review.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!review) return res.status(404).json({ message: 'Review not found' });
+        res.json(review);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.deleteReview = async (req, res) => {
+    try {
+        const review = await Review.findByIdAndDelete(req.params.id);
+        if (!review) return res.status(404).json({ message: 'Review not found' });
+        res.json({ message: 'Review deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
+
+===== backend/src/controllers/authController.js =====
+const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+require('dotenv').config();
+
+// Générer un token JWT
+const generateToken = (user) => {
+    return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+};
+
+exports.register = async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+            return res.status(400).json({ error: "Cet email est déjà utilisé" });
+        }
+
+        // 🔹 Assigner le rôle seulement si c'est "admin", sinon "user" par défaut
+        const assignedRole = role === "admin" ? "admin" : "user";
+        
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = new User({ name, email, password: hashedPassword, role: assignedRole });
+
+        await user.save();
+        res.status(201).json({ message: "Utilisateur créé avec succès" });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+
+
+
+
+
+// Connexion
+exports.login = async (req, res) => {
+    try {
+        console.log('Requête de login reçue:', req.body);
+        const { email, password } = req.body;
+        
+        // Validation des données d'entrée
+        if (!email || !password) {
+            return res.status(400).json({ 
+                error: "Email et mot de passe sont requis" 
+            });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            console.log('Utilisateur non trouvé');
+            return res.status(400).json({ error: "Utilisateur introuvable" });
+        }
+
+        // Vérification du mot de passe
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            console.log('Mot de passe incorrect');
+            return res.status(400).json({ error: "Mot de passe incorrect" });
+        }
+
+        // Générer le token
+        const token = generateToken(user);
+        
+        // Réponse JSON explicite
+        res.status(200).json({ 
+            token, 
+            user: { 
+                id: user._id, 
+                name: user.name, 
+                email: user.email, 
+                role: user.role 
+            } 
+        });
+    } catch (error) {
+        console.error('Erreur de login:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+
+
+
+
+===== backend/src/models/Payment.js =====
+
+// models/Payment.js
+const mongoose = require('mongoose'); // Ajout de l'import mongoose
+const PaymentSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    booking: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true },
+    amount: { type: Number, required: true },
+    status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
+    paymentMethod: { type: String, enum: ['card', 'paypal', 'cash'], required: true }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Payment', PaymentSchema);
+
+
+
+===== backend/src/models/User.js =====
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const UserSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' }
+}, { timestamps: true });
+
+const User = mongoose.model('User', UserSchema);
+module.exports = User;
+
+
+
+===== backend/src/models/Booking.js =====
+const mongoose = require('mongoose');
+
+const BookingSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    field: { type: mongoose.Schema.Types.ObjectId, ref: 'Field', required: true }, // Assure-toi que "Field" est bien écrit ici
+    date: { type: Date, required: true },
+    timeSlot: { type: String, required: true },
+    status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Booking', BookingSchema);
+
+
+
+===== backend/src/models/Field.js =====
+const mongoose = require('mongoose');
+
+const FieldSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  location: { type: String, required: true },
+  sportType: { type: String, enum: ['football', 'basketball', 'tennis', 'padel'], required: true },
+  pricePerHour: { type: Number, required: true },
+  active: { type: Boolean, default: true },
+  // Nouveau champ pour l'image
+  image: { type: String, default: '' } // URL ou chemin de l'image
+}, { timestamps: true });
+
+module.exports = mongoose.model('Field', FieldSchema);
+
+
+
+===== backend/src/models/Review.js =====
+// models/Review.js
+const mongoose = require('mongoose'); // Ajout de l'import mongoose
+const ReviewSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    field: { type: mongoose.Schema.Types.ObjectId, ref: 'Field', required: true },
+    rating: { type: Number, min: 1, max: 5, required: true },
+    comment: { type: String, required: false }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Review', ReviewSchema);
+
+
+===== backend/src/server.js =====
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const app = express();
+const path = require('path');
+
+// Configuration CORS pour autoriser le frontend
+app.use(cors({
+    origin: "http://localhost:3000", // Autoriser uniquement le frontend
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization"
+}));
+
+// Middleware pour JSON
+app.use(express.json());
+
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+// Importation des routes
+app.use('/api/bookings', require('./routes/bookingRoutes'));
+app.use('/api/fields', require('./routes/fieldRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+
+// Connexion MongoDB
+const mongoURI = process.env.MONGO_URI || "mongodb://mongo:27017/reservation_db";
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log("✅ Connected to MongoDB"))
+    .catch(err => console.error("❌ MongoDB connection error:", err));
+
+mongoose.connection.on("error", (err) => {
+    console.error("⚠️ MongoDB connection lost:", err);
+});
+
+// Vérifie que ton serveur tourne bien sur l'API et pas sur le frontend
+app.get('/', (req, res) => {
+    res.json({ message: "Backend API is running!" });
+});
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
+// Port du serveur
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
+
+
+
+===== backend/src/middlewares/uploadMiddleware.js =====
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/uploads/fields');
+    },
+    filename: (req, file, cb) => {
+        cb(null, `field-${Date.now()}${path.extname(file.originalname)}`);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Type de fichier non autorisé'), false);
+        }
+    }
+});
+
+module.exports = upload;
+
+
+===== backend/src/middlewares/validationMiddleware.js =====
+const { validationResult } = require('express-validator');
+
+exports.validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ 
+      error: "Erreur de validation", 
+      details: errors.array() 
+    });
+  }
+  next();
+};
+
+
+===== backend/src/middlewares/authMiddleware.js =====
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
+exports.authMiddleware = (req, res, next) => {
+    const authHeader = req.header('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: "Accès refusé. Aucun token fourni." });
+    }
+
+    const token = authHeader.split(' ')[1]; // Extrait uniquement le token
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        res.status(400).json({ error: "Token invalide." });
+    }
+};
+
+
+
+===== backend/.env =====
+JWT_SECRET=supersecretkey
+EMAIL_HOST=smtp.votreservice.com
+EMAIL_PORT=587
+EMAIL_USER=bisri.karim@gmail.com
+EMAIL_PASSWORD=Son@trach89
+EMAIL_FROM=noreply@sportreserve.com
+
+
+===== backend/README.md =====
+
+
+
+===== backend/package.json =====
+{
+    "name": "backend",
+    "version": "1.0.0",
+    "description": "Backend du projet de réservation de terrains de sport",
+    "main": "server.js",
+    "scripts": {
+        "start": "node src/server.js",
+        "dev": "nodemon server.js"
+    },
+    "dependencies": {
+        "bcryptjs": "^3.0.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
+        "express": "^4.18.2",
+        "express-validator": "^7.2.1",
+        "jest": "^29.7.0",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^7.8.6",
+        "multer": "^1.4.5-lts.1",
+        "supertest": "^7.0.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1"
+    }
+}
+
+
+
+===== backend/Dockerfile =====
+# Utiliser l'image officielle de Node.js 18 comme base
+FROM node:18
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Copier les fichiers package.json et package-lock.json
+COPY package*.json ./
+
+# Installer les dépendances
+RUN npm install
+
+# Copier tous les fichiers du projet
+COPY . .
+
+# Exposer le port 3000
+EXPOSE 3000
+
+# Lancer l'application
+CMD ["npm", "start"]
+
+
+

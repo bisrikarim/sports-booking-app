@@ -108,16 +108,31 @@ exports.confirmBooking = async (req, res) => {
 
 exports.getAllBookings = async (req, res) => {
     try {
-        let query = {};
-        if (req.user.role !== 'admin') {
-            query.user = req.user.id;
-        }
-        const bookings = await Booking.find(query).populate('user').populate('field');
-        res.json(bookings);
+      let query = {};
+      
+      // Filtres
+      if (req.query.status) query.status = req.query.status;
+      if (req.query.field) query.field = req.query.field;
+      
+      // Filtres de date
+      if (req.query.from || req.query.to) {
+        query.date = {};
+        if (req.query.from) query.date.$gte = new Date(req.query.from);
+        if (req.query.to) query.date.$lte = new Date(req.query.to);
+      }
+      
+      console.log("Query filtrée:", query);
+      
+      const bookings = await Booking.find(query)
+        .populate('user')
+        .populate('field')
+        .sort({ date: 1 });
+      
+      res.json(bookings);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message });
     }
-};
+  };
 
 
 exports.getBookingById = async (req, res) => {
@@ -167,7 +182,7 @@ exports.cancelBooking = async (req, res) => {
         }
 
         // Mettre à jour le statut en "canceled"
-        booking.status = 'canceled';
+        booking.status = 'cancelled';
         await booking.save();
 
         res.json({ message: "Réservation annulée avec succès.", booking });
@@ -175,4 +190,15 @@ exports.cancelBooking = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.getUserBookings = async (req, res) => {
+    try {
+      const bookings = await Booking.find({ user: req.user.id })
+        .populate('field')
+        .sort({ date: -1 });
+      res.json(bookings);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
 
